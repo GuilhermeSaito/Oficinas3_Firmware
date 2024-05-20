@@ -240,77 +240,12 @@ void acelerometro(void) {
   }
 }
 
-// --------------------------------------------- CELULA CARGA
-void celula_carga(void) {
-  Serial.println("------------------- CELULA CARGA -------------------");
-
-  if (scale.is_ready()) {
-    digitalWrite(LED_COLLECTING_PHASE, HIGH);
-    scale.set_scale();    
-    Serial.println("Tare... remove any weights from the scale.");
-    delay(2000);
-    scale.tare();
-    Serial.println("Tare done...");
-    Serial.print("Place a known weight on the scale...");
-    delay(2000);
-    long reading = scale.get_units(10);
-    Serial.print("Result: ");
-    Serial.println(reading);
-    digitalWrite(LED_COLLECTING_PHASE, LOW);
-  } 
-  else {
-    Serial.println("HX711 not found.");
-  }
-}
-
-// --------------------------------------------- MOTOR VIBRACAO
-void funcionamento_motor_vibracao_ligar(void) {
-  Serial.println("------------------- MOTOR VIBRACAO LIGAR -------------------");
-
-  digitalWrite(MOTOR_VIBRACAP_PIN, HIGH);
-}
-
-void funcionamento_motor_vibracao_desligar(void) {
-  Serial.println("------------------- MOTOR VIBRACAO DESLIGAR -------------------");
-
-  digitalWrite(MOTOR_VIBRACAP_PIN, LOW);
-}
-
-// --------------------------------------------- MOTOR PASSO
-void motor_passo(void) {
-  Serial.println("------------------- MOTOR PASSO -------------------");
-
-  digitalWrite(en, LOW);
-  digitalWrite(DIR, HIGH);
-  Serial.println("Girando no sentido horário...");
-  
-  for(int i = 0; i<steps_per_rev; i++)
-  {
-    digitalWrite(STEP, HIGH);
-    delayMicroseconds(100);
-    digitalWrite(STEP, LOW);
-    delayMicroseconds(100);
-  }
-  delay(500); 
-  
-  digitalWrite(DIR, LOW);
-  Serial.println("Girando no sentido anti-horário...");
-
-  for(int i = 0; i<steps_per_rev; i++)
-  {
-    digitalWrite(STEP, HIGH);
-    delayMicroseconds(100);
-    digitalWrite(STEP, LOW);
-    delayMicroseconds(100);
-  }
-}
 
 // --------------------------------------------- FUNCOES PARA O COLLECTING PHASE
 // ---- FIM DE CURSO
 int porta_entrada_OU_sem_container_coleta(void) {
   int container_coleta = digitalRead(RETURNING_CONTAINER_FIM_CURSO_PIN);
   int porta = digitalRead(COLLECTING_CONTAINER_PORTINHA_FIM_CURSO_PIN);
-  
 
   if ((container_coleta == LOW) && (porta == LOW)){
     return 0;
@@ -338,18 +273,17 @@ int verificando_nivel_semente(void) {
 void ativar_alcapao_collecting_container(void) {
   for(int posDegrees = 0; posDegrees <= 180; posDegrees++) {
     servoCollectingContainer.write(posDegrees);
-    Serial.println(posDegrees);
     delay(20);
   }
 
   for(int posDegrees = 180; posDegrees >= 0; posDegrees--) {
     servoCollectingContainer.write(posDegrees);
-    Serial.println(posDegrees);
     delay(20);
   }
 }
 
-// ---------------------------------------------
+// -----------------------------------------------------------------------------
+
 
 
 // --------------------------------------------- COLLECTING PHASE
@@ -368,24 +302,141 @@ void collectingPhase(void) {
   ativar_alcapao_collecting_container();
 
   // Verificar pelo potenciometro se o servo foi ativao corretamente        <- 1 Potenciometro
-  // int servoPosition = map(analogRead(POTENCIOMETER_MEASURING_CONTAINER_PIN), 0, 4096, 0, 180);
+  // int servoPosition = map(analogRead(POTENCIOMETER_COLLECTINH_CONTAINER_PIN), 0, 4096, 0, 180);
   // if ((servoPosition > 190) || (servoPosition < -10))
   // Mandar mensagem de erro
 }
 
+
+// --------------------------------------------- FUNCOES PARA O MEASURING PHASE
+// ---- MOTOR VIBRACAO
+void vibrar_measuring_container(void) {
+  digitalWrite(MOTOR_VIBRACAP_PIN, HIGH);
+
+  delay(5000);
+
+  digitalWrite(MOTOR_VIBRACAP_PIN, LOW);
+}
+
+// ---- MOTOR PASSO
+void nivelamento_amostra(void) {
+  int cont_timeout_nivelamento = 0;
+
+  digitalWrite(en, LOW);
+
+  // Gira para a direita primeiro
+  digitalWrite(DIR, HIGH);
+  while (digitalRead(MOTOR_PASSO_LIMIT_DIREITA_FIM_CURSO_PIN) == HIGH) {
+    digitalWrite(STEP, HIGH);
+    delayMicroseconds(100);
+    digitalWrite(STEP, LOW);
+    delayMicroseconds(100);
+
+    cont_timeout_nivelamento += 1;
+    if (cont_timeout_nivelamento == 7500) {
+      break;
+    }
+  }
+  // if (cont_timeout_nivelamento < 7500) {
+  //   mensagemErro
+  // }
+  cont_timeout_nivelamento = 0;
+  delay(500); 
+  
+  // Depois gira para a esquerda
+  digitalWrite(DIR, LOW);
+  while (digitalRead(MOTOR_PASSO_LIMIT_ESQUERDA_FIM_CURSO_PIN) == HIGH) {
+    digitalWrite(STEP, HIGH);
+    delayMicroseconds(100);
+    digitalWrite(STEP, LOW);
+    delayMicroseconds(100);
+
+    cont_timeout_nivelamento += 1;
+    if (cont_timeout_nivelamento == 7500) {
+      break;
+    }
+  }
+  // if (cont_timeout_nivelamento < 7500) {
+  //   mensagemErro
+  // }
+}
+
+// ---- CELULA CARGA
+void medicao_amostra(void) {
+  if (scale.is_ready()) {
+    // ------- Soh para mostrar enquanto nao enviamos dados
+    digitalWrite(LED_DEBUG, LOW);
+    scale.set_scale();    
+    Serial.println("Tare... remove any weights from the scale.");
+    delay(2000);
+    scale.tare();
+    Serial.println("Tare done...");
+    Serial.print("Place a known weight on the scale...");
+    delay(2000);
+    long reading = scale.get_units(10);
+    Serial.print("Result: ");
+    Serial.println(reading);
+  } 
+  else {
+    Serial.println("HX711 not found.");
+    digitalWrite(LED_DEBUG, HIGH);
+  }
+}
+
+// ---- SERVO MOTOR
+void ativar_alcapao_measuring_container(void) {
+  for(int posDegrees = 0; posDegrees <= 180; posDegrees++) {
+    servoMeasuringContainer.write(posDegrees);
+    delay(20);
+  }
+
+  for(int posDegrees = 180; posDegrees >= 0; posDegrees--) {
+    servoMeasuringContainer.write(posDegrees);
+    delay(20);
+  }
+}
+
+// -----------------------------------------------------------------------------
+
 // --------------------------------------------- MEASURING PHASE
 void measuringPhase(void) {
+  // Acender o led da fase de medicao                                       <- 1 LED
   digitalWrite(LED_COLLECTING_PHASE, LOW);
   digitalWrite(LED_MEASURING_PHASE, HIGH);
   digitalWrite(LED_RETURNING_PHASE, LOW);
+
+  // Fazer o motor de vibracao acionar                                      <- Motor de Vibracao
+  vibrar_measuring_container();
+
+  // Fazer o motor de passo acionar para frente e para tras                 <- Motor de passo
+  //       deixa em um loop ateh acionar os fim de cursos                   <- 2 Fim de Curso
+  nivelamento_amostra();
+
+  // Faz a medida da amostra                                                <- Celula de carga
+  medicao_amostra();
+
+  // Ativa o servo motor para liberar o alcapao                             <- 1 Servo Motor
+  ativar_alcapao_measuring_container();
+
+  // Verificar pelo potenciometro se o servo foi ativao corretamente        <- 1 Potenciometro
+  // int servoPosition = map(analogRead(POTENCIOMETER_MEASURING_CONTAINER_PIN), 0, 4096, 0, 180);
+  // if ((servoPosition > 190) || (servoPosition < -10))
+  // Mandar mensagem de erro
   
 }
 
 // --------------------------------------------- RETURNING PHASE
 void returningPhase(void) {
+  // Acender o led da fase de retorno                                       <- 1 LED
   digitalWrite(LED_COLLECTING_PHASE, LOW);
   digitalWrite(LED_MEASURING_PHASE, LOW);
   digitalWrite(LED_RETURNING_PHASE, HIGH);
+
+  // Vai verificando se o container de retorno saiu ou nao pelo fim de curso
+  delay(5000);
+  while(porta_entrada_OU_sem_container_coleta()){
+    delay(100);
+  }
 }
 
 // --------------------------------------------- LOOP MAIN --------------------------------------------- 
@@ -418,24 +469,10 @@ void loop() {
   
   measuringPhase();
   // Acender o led da fase de medicao                                       <- 1 LED
-
-
-
   // Fazer o motor de vibracao acionar                                      <- Motor de Vibracao
-
-
-
   // Fazer o motor de passo acionar para frente e para tras                 <- Motor de passo
   //       deixa em um loop ateh acionar os fim de cursos                   <- 2 Fim de Curso
-
-
-
-
   // Faz a medida da amostra                                                <- Celula de carga
-
-
-
-
   // Ativa o servo motor para liberar o alcapao                             <- 1 Servo Motor
   // Verificar pelo potenciometro se o servo foi ativao corretamente        <- 1 Potenciometro
 
@@ -443,10 +480,6 @@ void loop() {
 
   returningPhase();
   // Acender o led da fase de retorno                                       <- 1 LED
-
-
-
-
   // Vai verificando se o container de retorno saiu ou nao pelo fim de curso
   
   delay(500);
