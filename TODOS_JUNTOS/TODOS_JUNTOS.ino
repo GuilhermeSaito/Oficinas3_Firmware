@@ -134,6 +134,9 @@ void setup_accelerometer(void) {
 // --------------------------------------------- FIM DE CURSO
 void setup_fim_curso(void) {
   pinMode (FIM_CURSO1, INPUT);
+  // pinMode (FIM_CURSO2, INPUT);
+  // pinMode (FIM_CURSO3, INPUT);
+  // pinMode (FIM_CURSO4, INPUT);
   delay(100);
 }
 
@@ -352,15 +355,70 @@ void motor_passo(void) {
 
 // --------------------------------------------- LOOP MAIN --------------------------------------------- 
 void loop() {
-  acelerometro();
-  fim_curso();
-  funcionamento_sensor_ir();
+  // acelerometro();
+  // fim_curso();
+  // funcionamento_sensor_ir();
 
-  // servo_motor_potenciometro();
+  // Verificar a conexao com o wifi para comecar a maquina    <- Modilo WIFI
 
-  // --------------------------------------------- LEDS
+
+
+
+
+  // Verificar se a porta de cima e o container de retorno estao no lugar   <- 2 FIM DE CURSO
+
+
   
-  // digitalWrite(LED4_PIN, HIGH);
+
+  // collectingPhase();
+  // Acender led da fase de coleta                                     <- 1 LED
+
+
+
+
+  // Verificar o sensor IR se está acusando o nivel certo                   <- Sensor IR
+
+
+
+
+  // Ativar o servo motor do alcapao 1                                      <- 1 Servo Motor
+  // Verificar pelo potenciometro se o servo foi ativao corretamente        <- 1 Potenciometro
+
+
+
+  
+  // measuringPhase();
+  // Acender o led da fase de medicao                                       <- 1 LED
+
+
+
+  // Fazer o motor de vibracao acionar                                      <- Motor de Vibracao
+
+
+
+  // Fazer o motor de passo acionar para frente e para tras                 <- Motor de passo
+  //       deixa em um loop ateh acionar os fim de cursos                   <- 2 Fim de Curso
+
+
+
+
+  // Faz a medida da amostra                                                <- Celula de carga
+
+
+
+
+  // Ativa o servo motor para liberar o alcapao                             <- 1 Servo Motor
+  // Verificar pelo potenciometro se o servo foi ativao corretamente        <- 1 Potenciometro
+
+
+
+  // returningPhase();
+  // Acender o led da fase de retorno                                       <- 1 LED
+
+
+
+
+  // Vai verificando se o container de retorno saiu ou nao pelo fim de curso
   
   delay(500);
 }
