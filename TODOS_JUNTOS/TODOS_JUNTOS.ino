@@ -8,22 +8,18 @@
 #define LED_DEBUG 2
 
 // --------------------------------------------- ACELEROMETRO
-float media_final=0;
-float value =0;
 int cont = 0;
 float med_x = 0;
 float med_y = 0;
 float med_z = 0;
 float med_z_inicial = 0;
-float cond=0;
-float soma =0;
 Adafruit_MPU6050 mpu;
 
 // --------------------------------------------- FIM DE CURSO
-// const int fim_curso2 = 16;
-const int fim_curso1 = 34;
-// const int fim_curso3 = 17;
-// const int fim_curso4 = 35;
+// #define FIM_CURSO2 16
+#define FIM_CURSO1 34
+// #define FIM_CURSO3 17
+// #define FIM_CURSO4 35
 
 // --------------------------------------------- SERVO MOTOR POTENCIOMETRO
 #define SERVO1_PIN 12
@@ -33,8 +29,6 @@ const int fim_curso1 = 34;
 
 Servo myServo1;
 Servo myServo2;
-int val = 0;
-int num = 0;
 
 // --------------------------------------------- MOTOR VIBRACAO
 #define MOTOR_VIBRACAP_PIN 25
@@ -46,17 +40,17 @@ int num = 0;
 #define LED4_PIN 13
 
 // --------------------------------------------- CELULA CARGA
-const int LOADCELL_DOUT_PIN = 19;
-const int LOADCELL_SCK_PIN = 18;
+#define LOADCELL_DOUT_PIN 19
+#define LOADCELL_SCK_PIN 18
 HX711 scale;
 
 // --------------------------------------------- SENSOR IR
-const int sensor_ir = 23;
+#define SENSOR_IR 23
 
 // --------------------------------------------- MOTOR PASSO
-const int DIR = 32;
-const int STEP = 33;
-const int en = 5;
+#define DIR 32
+#define STEP 33
+#define en 5
 const int steps_per_rev = 1500;
 
 
@@ -139,7 +133,7 @@ void setup_accelerometer(void) {
 
 // --------------------------------------------- FIM DE CURSO
 void setup_fim_curso(void) {
-  pinMode (fim_curso1, INPUT);
+  pinMode (FIM_CURSO1, INPUT);
   delay(100);
 }
 
@@ -175,7 +169,7 @@ void setup_celula_carga(void) {
 
 // --------------------------------------------- SENSOR IR
 void setup_sensor_ir(void) {
-  pinMode (sensor_ir, INPUT);
+  pinMode (SENSOR_IR, INPUT);
   delay(100);
 }
 
@@ -247,7 +241,7 @@ void acelerometro(void) {
 void fim_curso(void) {
   Serial.println("------------------- FIM DE CURSO -------------------");
 
-  int state = digitalRead(fim_curso1);
+  int state = digitalRead(FIM_CURSO1);
   Serial.println(state);
   if(state==LOW){
     Serial.println("Object Detected");
@@ -318,12 +312,12 @@ void funcionamento_motor_vibracao_desligar(void) {
 void funcionamento_sensor_ir(void) {
   Serial.println("------------------- SENSOR IR -------------------");
 
-  if(digitalRead(sensor_ir) == LOW){
-    Serial.println(digitalRead(sensor_ir));
+  if(digitalRead(SENSOR_IR) == LOW){
+    Serial.println(digitalRead(SENSOR_IR));
     servo_motor_potenciometro();
   }
   else {
-    Serial.println(digitalRead(sensor_ir));
+    Serial.println(digitalRead(SENSOR_IR));
   }
 }
 
