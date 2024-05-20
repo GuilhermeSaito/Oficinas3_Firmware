@@ -16,28 +16,28 @@ float med_z_inicial = 0;
 Adafruit_MPU6050 mpu;
 
 // --------------------------------------------- FIM DE CURSO
-// #define FIM_CURSO2 16
-#define FIM_CURSO1 34
-// #define FIM_CURSO3 17
-// #define FIM_CURSO4 35
+#define RETURNING_CONTAINER_FIM_CURSO_PIN 34
+#define COLLECTING_CONTAINER_PORTINHA_FIM_CURSO_PIN 35
+#define MOTOR_PASSO_LIMIT_DIREITA_FIM_CURSO_PIN 17
+#define MOTOR_PASSO_LIMIT_ESQUERDA_FIM_CURSO_PIN 16
 
 // --------------------------------------------- SERVO MOTOR POTENCIOMETRO
-#define SERVO1_PIN 12
-#define POTENCIOMETER1_PIN 14
-#define SERVO2_PIN 27
-#define POTENCIOMETER2_PIN 26
+#define SERVO_COLLECTING_CONTAINER_PIN 27
+#define POTENCIOMETER_COLLECTINH_CONTAINER_PIN 26
+#define SERVO_MEASURING_CONTAINER_PIN 12
+#define POTENCIOMETER_MEASURING_CONTAINER_PIN 14
 
-Servo myServo1;
-Servo myServo2;
+Servo servoCollectingContainer;
+Servo servoMeasuringContainer;
 
 // --------------------------------------------- MOTOR VIBRACAO
 #define MOTOR_VIBRACAP_PIN 25
 
 // --------------------------------------------- LEDS
-#define LED1_PIN 15
-#define LED2_PIN 2
-#define LED3_PIN 4
-#define LED4_PIN 13
+#define LED_COLLECTING_PHASE 4
+#define LED_MEASURING_PHASE 2
+#define LED_RETURNING_PHASE 15
+#define LED_WIFI 13
 
 // --------------------------------------------- CELULA CARGA
 #define LOADCELL_DOUT_PIN 19
@@ -133,19 +133,19 @@ void setup_accelerometer(void) {
 
 // --------------------------------------------- FIM DE CURSO
 void setup_fim_curso(void) {
-  pinMode (FIM_CURSO1, INPUT);
-  // pinMode (FIM_CURSO2, INPUT);
-  // pinMode (FIM_CURSO3, INPUT);
-  // pinMode (FIM_CURSO4, INPUT);
+  pinMode (RETURNING_CONTAINER_FIM_CURSO_PIN, INPUT);
+  pinMode (MOTOR_PASSO_LIMIT_ESQUERDA_FIM_CURSO_PIN, INPUT);
+  pinMode (MOTOR_PASSO_LIMIT_DIREITA_FIM_CURSO_PIN, INPUT);
+  pinMode (COLLECTING_CONTAINER_PORTINHA_FIM_CURSO_PIN, INPUT);
   delay(100);
 }
 
 // --------------------------------------------- SERVO MOTOR POTENCIOMETRO
 void setup_servo_potenciometro(void ) {
-  myServo1.setPeriodHertz(50); // Set PWM frequency to 50Hz (standard for servos)
-  myServo1.attach(SERVO1_PIN, 500, 2400); // (pin, min pulse width, max pulse width in microseconds)
-  myServo2.setPeriodHertz(50); // Set PWM frequency to 50Hz (standard for servos)
-  myServo2.attach(SERVO2_PIN, 500, 2400); // (pin, min pulse width, max pulse width in microseconds)
+  servoCollectingContainer.setPeriodHertz(50); // Set PWM frequency to 50Hz (standard for servos)
+  servoCollectingContainer.attach(SERVO_COLLECTING_CONTAINER_PIN, 500, 2400); // (pin, min pulse width, max pulse width in microseconds)
+  servoMeasuringContainer.setPeriodHertz(50); // Set PWM frequency to 50Hz (standard for servos)
+  servoMeasuringContainer.attach(SERVO_MEASURING_CONTAINER_PIN, 500, 2400); // (pin, min pulse width, max pulse width in microseconds)
   delay(100);
 }
 
@@ -157,10 +157,10 @@ void setup_motor_vibracao(void) {
 
 // --------------------------------------------- LEDS
 void setup_leds(void) {
-  pinMode(LED1_PIN, OUTPUT); 
-  pinMode(LED2_PIN, OUTPUT); 
-  pinMode(LED3_PIN, OUTPUT); 
-  pinMode(LED4_PIN, OUTPUT); 
+  pinMode(LED_RETURNING_PHASE, OUTPUT); 
+  pinMode(LED_MEASURING_PHASE, OUTPUT); 
+  pinMode(LED_COLLECTING_PHASE, OUTPUT); 
+  pinMode(LED_WIFI, OUTPUT); 
   delay(100);
 }
 
@@ -231,47 +231,12 @@ void acelerometro(void) {
 
   if ((med_z > med_z_inicial + 1) || (med_z < med_z_inicial - 1)) {
     Serial.println("MEXEU!");
-    digitalWrite(LED1_PIN, HIGH);
-    digitalWrite(LED2_PIN, HIGH);
+    digitalWrite(LED_RETURNING_PHASE, HIGH);
+    digitalWrite(LED_MEASURING_PHASE, HIGH);
   }
   else {
-    digitalWrite(LED1_PIN, LOW);
-    digitalWrite(LED2_PIN, LOW);
-  }
-}
-
-// --------------------------------------------- FIM DE CURSO
-void fim_curso(void) {
-  Serial.println("------------------- FIM DE CURSO -------------------");
-
-  int state = digitalRead(FIM_CURSO1);
-  Serial.println(state);
-  if(state==LOW){
-    Serial.println("Object Detected");
-    // funcionamento_motor_vibracao_desligar();
-    motor_passo();
-    celula_carga();
-  }
-  else {
-    Serial.println("All Clear");
-    // funcionamento_motor_vibracao_ligar();
-  }
-}
-
-// --------------------------------------------- SERVO MOTOR POTENCIOMETRO
-void servo_motor_potenciometro(void) {
-  Serial.println("------------------- SERVO MOTOR POTENCIOMETRO -------------------");
-
-  for(int posDegrees = 0; posDegrees <= 180; posDegrees++) {
-    myServo1.write(posDegrees);
-    Serial.println(posDegrees);
-    delay(20);
-  }
-
-  for(int posDegrees = 180; posDegrees >= 0; posDegrees--) {
-    myServo1.write(posDegrees);
-    Serial.println(posDegrees);
-    delay(20);
+    digitalWrite(LED_RETURNING_PHASE, LOW);
+    digitalWrite(LED_MEASURING_PHASE, LOW);
   }
 }
 
@@ -280,7 +245,7 @@ void celula_carga(void) {
   Serial.println("------------------- CELULA CARGA -------------------");
 
   if (scale.is_ready()) {
-    digitalWrite(LED3_PIN, HIGH);
+    digitalWrite(LED_COLLECTING_PHASE, HIGH);
     scale.set_scale();    
     Serial.println("Tare... remove any weights from the scale.");
     delay(2000);
@@ -291,7 +256,7 @@ void celula_carga(void) {
     long reading = scale.get_units(10);
     Serial.print("Result: ");
     Serial.println(reading);
-    digitalWrite(LED3_PIN, LOW);
+    digitalWrite(LED_COLLECTING_PHASE, LOW);
   } 
   else {
     Serial.println("HX711 not found.");
@@ -309,19 +274,6 @@ void funcionamento_motor_vibracao_desligar(void) {
   Serial.println("------------------- MOTOR VIBRACAO DESLIGAR -------------------");
 
   digitalWrite(MOTOR_VIBRACAP_PIN, LOW);
-}
-
-// --------------------------------------------- SENSOR IR
-void funcionamento_sensor_ir(void) {
-  Serial.println("------------------- SENSOR IR -------------------");
-
-  if(digitalRead(SENSOR_IR) == LOW){
-    Serial.println(digitalRead(SENSOR_IR));
-    servo_motor_potenciometro();
-  }
-  else {
-    Serial.println(digitalRead(SENSOR_IR));
-  }
 }
 
 // --------------------------------------------- MOTOR PASSO
@@ -353,41 +305,118 @@ void motor_passo(void) {
   }
 }
 
+// --------------------------------------------- FUNCOES PARA O COLLECTING PHASE
+// ---- FIM DE CURSO
+int porta_entrada_OU_sem_container_coleta(void) {
+  int container_coleta = digitalRead(RETURNING_CONTAINER_FIM_CURSO_PIN);
+  int porta = digitalRead(COLLECTING_CONTAINER_PORTINHA_FIM_CURSO_PIN);
+  
+
+  if ((container_coleta == LOW) && (porta == LOW)){
+    return 0;
+  }
+  return 1;
+}
+
+// ---- SENSOR IR
+int verificando_nivel_semente(void) {
+  int cont_tempo_sensor_ir = 0;
+
+  if (digitalRead(SENSOR_IR) == LOW) {
+    while ((cont_tempo_sensor_ir < 5) && (digitalRead(SENSOR_IR) == LOW)) {
+      cont_tempo_sensor_ir += 1;
+      delay(500);
+    }
+    if (cont_tempo_sensor_ir >= 5) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
+// ---- SERVO MOTOR
+void ativar_alcapao_collecting_container(void) {
+  for(int posDegrees = 0; posDegrees <= 180; posDegrees++) {
+    servoCollectingContainer.write(posDegrees);
+    Serial.println(posDegrees);
+    delay(20);
+  }
+
+  for(int posDegrees = 180; posDegrees >= 0; posDegrees--) {
+    servoCollectingContainer.write(posDegrees);
+    Serial.println(posDegrees);
+    delay(20);
+  }
+}
+
+// ---------------------------------------------
+
+
+// --------------------------------------------- COLLECTING PHASE
+void collectingPhase(void) {
+  // Acender led da fase de coleta                                     <- 1 LED
+  digitalWrite(LED_COLLECTING_PHASE, HIGH);
+  digitalWrite(LED_MEASURING_PHASE, LOW);
+  digitalWrite(LED_RETURNING_PHASE, LOW);
+
+  // Verificar o sensor IR se está acusando o nivel certo                   <- Sensor IR
+  while (verificando_nivel_semente()) {
+    delay(100);
+  }
+
+  // Ativar o servo motor do alcapao 1                                      <- 1 Servo Motor
+  ativar_alcapao_collecting_container();
+
+  // Verificar pelo potenciometro se o servo foi ativao corretamente        <- 1 Potenciometro
+  // int servoPosition = map(analogRead(POTENCIOMETER_MEASURING_CONTAINER_PIN), 0, 4096, 0, 180);
+  // if ((servoPosition > 190) || (servoPosition < -10))
+  // Mandar mensagem de erro
+}
+
+// --------------------------------------------- MEASURING PHASE
+void measuringPhase(void) {
+  digitalWrite(LED_COLLECTING_PHASE, LOW);
+  digitalWrite(LED_MEASURING_PHASE, HIGH);
+  digitalWrite(LED_RETURNING_PHASE, LOW);
+  
+}
+
+// --------------------------------------------- RETURNING PHASE
+void returningPhase(void) {
+  digitalWrite(LED_COLLECTING_PHASE, LOW);
+  digitalWrite(LED_MEASURING_PHASE, LOW);
+  digitalWrite(LED_RETURNING_PHASE, HIGH);
+}
+
 // --------------------------------------------- LOOP MAIN --------------------------------------------- 
 void loop() {
-  // acelerometro();
-  // fim_curso();
-  // funcionamento_sensor_ir();
-
+  // ---------------- Isso eu ainda nao vou implementar, estah pronto mas ainda n vou fazer funcionar junto aqui
   // Verificar a conexao com o wifi para comecar a maquina    <- Modilo WIFI
+  // -------------------------------------------------
+  // -------------------------------------------------
 
 
 
 
 
   // Verificar se a porta de cima e o container de retorno estao no lugar   <- 2 FIM DE CURSO
+  while(porta_entrada_OU_sem_container_coleta()){
+    delay(100);
+  }
 
 
   
 
-  // collectingPhase();
+  collectingPhase();
   // Acender led da fase de coleta                                     <- 1 LED
-
-
-
-
   // Verificar o sensor IR se está acusando o nivel certo                   <- Sensor IR
-
-
-
-
   // Ativar o servo motor do alcapao 1                                      <- 1 Servo Motor
   // Verificar pelo potenciometro se o servo foi ativao corretamente        <- 1 Potenciometro
 
 
 
   
-  // measuringPhase();
+  measuringPhase();
   // Acender o led da fase de medicao                                       <- 1 LED
 
 
@@ -412,7 +441,7 @@ void loop() {
 
 
 
-  // returningPhase();
+  returningPhase();
   // Acender o led da fase de retorno                                       <- 1 LED
 
 
