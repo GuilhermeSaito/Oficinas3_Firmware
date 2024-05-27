@@ -1,8 +1,8 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 
-const char* ssid = "Kanekinho";
-const char* password = "kanekudo";
+const char* ssid = "login";
+const char* password = "password";
 
 const char* apiUrl = "https://joaopedrogalera.pythonanywhere.com:80/machineSync";  // Replace with your API endpoint
 
@@ -39,7 +39,7 @@ void loop() {
       http.begin(client, apiUrl);
 
       http.addHeader("Content-Type", "application/json");
-      int httpResponseCode = http.POST("{\"uuid\":\"4688356cecb043a78b15e4e101b7fdfd\",\"secret\":\"6KMayg5Vw5PTUb52iMz8OUT7JvSFH21i5PSpdvRFPosfjFoAXSIjFIWrdoj2wyFcG7Lf1q6Z4pnYe8cGW3h0lVL4vCAV23Kl0R26M30SyOqmiy62JcxHqfcSVs58kVdTXggXZnpy5dg1cdiutFb2QACphXSbK6Y970bHwYSVaSgKxcjlDrAatAxYX8BkTxYqsBL8VEytIoZehDGiPLtFHEW2Rg0wWA4meefDBUSRUoW2GAPm1qRY2gPV1iMdxMr0\",\"status\":\"0\"}");
+      int httpResponseCode = http.POST("teste");
 
       Serial.print("HTTP Response code: ");
       Serial.println(httpResponseCode);
