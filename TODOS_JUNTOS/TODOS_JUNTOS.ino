@@ -5,7 +5,7 @@
 #include <ESP32Servo.h>
 #include "HX711.h"
 
-#define LED_DEBUG 2
+// #define LED_DEBUG 2
 
 // --------------------------------------------- ACELEROMETRO
 int cont = 0;
@@ -134,8 +134,8 @@ void setup_accelerometer(void) {
 // --------------------------------------------- FIM DE CURSO
 void setup_fim_curso(void) {
   pinMode (RETURNING_CONTAINER_FIM_CURSO_PIN, INPUT);
-  pinMode (MOTOR_PASSO_LIMIT_ESQUERDA_FIM_CURSO_PIN, INPUT);
-  pinMode (MOTOR_PASSO_LIMIT_DIREITA_FIM_CURSO_PIN, INPUT);
+  pinMode (MOTOR_PASSO_LIMIT_ESQUERDA_FIM_CURSO_PIN, INPUT_PULLDOWN);
+  pinMode (MOTOR_PASSO_LIMIT_DIREITA_FIM_CURSO_PIN, INPUT_PULLDOWN);
   pinMode (COLLECTING_CONTAINER_PORTINHA_FIM_CURSO_PIN, INPUT);
   delay(100);
 }
@@ -191,16 +191,16 @@ void setup(void) {
   while (!Serial)
     delay(10);
 
-  setup_accelerometer();
+  // setup_accelerometer();
   setup_fim_curso();
   setup_servo_potenciometro();
   setup_motor_vibracao();  
   setup_sensor_ir();
   setup_motor_passo();
   setup_leds();
-  setup_celula_carga();
+  // setup_celula_carga();
 
-  pinMode(LED_DEBUG, OUTPUT);
+  // pinMode(LED_DEBUG, OUTPUT);
 }
 
 // --------------------------------------------- ACELEROMETRO
@@ -240,6 +240,12 @@ void acelerometro(void) {
   }
 }
 
+void resetServos() {
+  servoCollectingContainer.write(180);
+  delay(2000);
+  servoMeasuringContainer.write(180);
+  delay(1000);
+}
 
 // --------------------------------------------- FUNCOES PARA O COLLECTING PHASE
 // ---- FIM DE CURSO
@@ -247,7 +253,7 @@ int porta_entrada_OU_sem_container_coleta(void) {
   int container_coleta = digitalRead(RETURNING_CONTAINER_FIM_CURSO_PIN);
   int porta = digitalRead(COLLECTING_CONTAINER_PORTINHA_FIM_CURSO_PIN);
 
-  if ((container_coleta == LOW) && (porta == LOW)){
+  if ((container_coleta == HIGH) && (porta == HIGH)){
     return 0;
   }
   return 1;
@@ -257,10 +263,10 @@ int porta_entrada_OU_sem_container_coleta(void) {
 int verificando_nivel_semente(void) {
   int cont_tempo_sensor_ir = 0;
 
-  if (digitalRead(SENSOR_IR) == LOW) {
-    while ((cont_tempo_sensor_ir < 5) && (digitalRead(SENSOR_IR) == LOW)) {
+  if (digitalRead(SENSOR_IR) == HIGH) {
+    while ((cont_tempo_sensor_ir < 5) && (digitalRead(SENSOR_IR) == HIGH)) {
       cont_tempo_sensor_ir += 1;
-      delay(500);
+      delay(1000);
     }
     if (cont_tempo_sensor_ir >= 5) {
       return 0;
@@ -271,15 +277,33 @@ int verificando_nivel_semente(void) {
 
 // ---- SERVO MOTOR
 void ativar_alcapao_collecting_container(void) {
-  for(int posDegrees = 0; posDegrees <= 180; posDegrees++) {
-    servoCollectingContainer.write(posDegrees);
-    delay(20);
-  }
+  // for(int posDegrees = 0; posDegrees <= 180; posDegrees++) {
+  //   servoCollectingContainer.write(posDegrees);
+  //   delay(20);
+  // }
 
-  for(int posDegrees = 180; posDegrees >= 0; posDegrees--) {
-    servoCollectingContainer.write(posDegrees);
-    delay(20);
-  }
+  // for(int posDegrees = 180; posDegrees >= 0; posDegrees--) {
+  //   servoCollectingContainer.write(posDegrees);
+  //   delay(20);
+  // }
+
+  // Debug
+  digitalWrite(LED_WIFI, HIGH);
+  delay(500);
+  // ----
+
+  delay(5000);
+  servoCollectingContainer.write(180);
+  delay(5000);
+  servoCollectingContainer.write(0);
+  delay(10000);
+  servoCollectingContainer.write(180);
+  delay(2000);
+
+  // Debug
+  digitalWrite(LED_WIFI, LOW);
+  delay(500);
+  // ----
 }
 
 // -----------------------------------------------------------------------------
@@ -296,6 +320,12 @@ void collectingPhase(void) {
   // Verificar o sensor IR se está acusando o nivel certo                   <- Sensor IR
   while (verificando_nivel_semente()) {
     delay(100);
+  //   // Debug
+  //   digitalWrite(LED_WIFI, HIGH);
+  //   delay(500);
+  //   digitalWrite(LED_WIFI, LOW);
+  //   delay(500);
+  //   // ----
   }
 
   // Ativar o servo motor do alcapao 1                                      <- 1 Servo Motor
@@ -319,53 +349,75 @@ void vibrar_measuring_container(void) {
 }
 
 // ---- MOTOR PASSO
-void nivelamento_amostra(void) {
+void nivelamento_amostra(int etapa_parametro, int direcao_parametro) {
+  int quantidade = 0;
   int cont_timeout_nivelamento = 0;
+  int etapa = etapa_parametro;
+  int direcao = direcao_parametro;
 
   digitalWrite(en, LOW);
 
-  // Gira para a direita primeiro
-  digitalWrite(DIR, HIGH);
-  while (digitalRead(MOTOR_PASSO_LIMIT_DIREITA_FIM_CURSO_PIN) == HIGH) {
-    digitalWrite(STEP, HIGH);
-    delayMicroseconds(100);
-    digitalWrite(STEP, LOW);
-    delayMicroseconds(100);
+  while (quantidade < 3) {
+    cont_timeout_nivelamento = 0;
 
-    cont_timeout_nivelamento += 1;
-    if (cont_timeout_nivelamento == 7500) {
-      break;
-    }
-  }
-  // if (cont_timeout_nivelamento < 7500) {
-  //   mensagemErro
-  // }
-  cont_timeout_nivelamento = 0;
-  delay(500); 
-  
-  // Depois gira para a esquerda
-  digitalWrite(DIR, LOW);
-  while (digitalRead(MOTOR_PASSO_LIMIT_ESQUERDA_FIM_CURSO_PIN) == HIGH) {
-    digitalWrite(STEP, HIGH);
-    delayMicroseconds(100);
-    digitalWrite(STEP, LOW);
-    delayMicroseconds(100);
+    if (etapa == 1){
+      digitalWrite(DIR, direcao);
 
-    cont_timeout_nivelamento += 1;
-    if (cont_timeout_nivelamento == 7500) {
-      break;
+      while ((digitalRead(MOTOR_PASSO_LIMIT_DIREITA_FIM_CURSO_PIN) != HIGH) && (digitalRead(MOTOR_PASSO_LIMIT_ESQUERDA_FIM_CURSO_PIN) != HIGH)) {
+        digitalWrite(STEP, HIGH);
+        delayMicroseconds(500);
+        digitalWrite(STEP, LOW);
+        delayMicroseconds(500);
+
+        cont_timeout_nivelamento += 1;
+        if (cont_timeout_nivelamento >= 5500) {
+          quantidade += 1;
+          break;
+        }
+      }
     }
+    if (digitalRead(MOTOR_PASSO_LIMIT_DIREITA_FIM_CURSO_PIN) == HIGH){
+        direcao = 0;
+        etapa = 0;
+        quantidade += 1;
+        cont_timeout_nivelamento = 0;
+        // delay(1000);
+    }
+    else if (digitalRead(MOTOR_PASSO_LIMIT_ESQUERDA_FIM_CURSO_PIN) == HIGH){
+        direcao = 1;
+        etapa = 0;
+        quantidade += 1;
+        cont_timeout_nivelamento = 0;
+        // delay(1000);
+    }
+    if (etapa == 0){
+        digitalWrite(DIR, direcao);
+
+        while ((digitalRead(MOTOR_PASSO_LIMIT_DIREITA_FIM_CURSO_PIN) == HIGH) || (digitalRead(MOTOR_PASSO_LIMIT_ESQUERDA_FIM_CURSO_PIN) == HIGH)) {
+          digitalWrite(STEP, HIGH);
+          delayMicroseconds(500);
+          digitalWrite(STEP, LOW);
+          delayMicroseconds(500);
+      
+          cont_timeout_nivelamento += 1;
+          if (cont_timeout_nivelamento >= 5500) {
+            quantidade += 1;
+            break;
+          }
+        }
+      etapa = 1;
+    }
+
+    // delay(1000);
+
   }
-  // if (cont_timeout_nivelamento < 7500) {
-  //   mensagemErro
-  // }
 }
 
 // ---- CELULA CARGA
 void medicao_amostra(void) {
   if (scale.is_ready()) {
     // ------- Soh para mostrar enquanto nao enviamos dados
-    digitalWrite(LED_DEBUG, LOW);
+    // digitalWrite(LED_DEBUG, LOW);
     scale.set_scale();    
     Serial.println("Tare... remove any weights from the scale.");
     delay(2000);
@@ -379,21 +431,39 @@ void medicao_amostra(void) {
   } 
   else {
     Serial.println("HX711 not found.");
-    digitalWrite(LED_DEBUG, HIGH);
+    // digitalWrite(LED_DEBUG, HIGH);
   }
 }
 
 // ---- SERVO MOTOR
 void ativar_alcapao_measuring_container(void) {
-  for(int posDegrees = 0; posDegrees <= 180; posDegrees++) {
-    servoMeasuringContainer.write(posDegrees);
-    delay(20);
-  }
+  // for(int posDegrees = 0; posDegrees <= 180; posDegrees++) {
+  //   servoMeasuringContainer.write(posDegrees);
+  //   delay(20);
+  // }
 
-  for(int posDegrees = 180; posDegrees >= 0; posDegrees--) {
-    servoMeasuringContainer.write(posDegrees);
-    delay(20);
-  }
+  // for(int posDegrees = 180; posDegrees >= 0; posDegrees--) {
+  //   servoMeasuringContainer.write(posDegrees);
+  //   delay(20);
+  // }
+
+  // Debug
+  digitalWrite(LED_WIFI, HIGH);
+  delay(500);
+  // ----
+
+  delay(5000);
+  servoMeasuringContainer.write(180);
+  delay(5000);
+  servoMeasuringContainer.write(0);
+  delay(10000);
+  servoMeasuringContainer.write(180);
+  delay(2000);
+
+  // Debug
+  digitalWrite(LED_WIFI, LOW);
+  delay(500);
+  // ----
 }
 
 // -----------------------------------------------------------------------------
@@ -410,10 +480,10 @@ void measuringPhase(void) {
 
   // Fazer o motor de passo acionar para frente e para tras                 <- Motor de passo
   //       deixa em um loop ateh acionar os fim de cursos                   <- 2 Fim de Curso
-  nivelamento_amostra();
+  nivelamento_amostra(1, 1);
 
   // Faz a medida da amostra                                                <- Celula de carga
-  medicao_amostra();
+  // medicao_amostra();
 
   // Ativa o servo motor para liberar o alcapao                             <- 1 Servo Motor
   ativar_alcapao_measuring_container();
@@ -437,6 +507,8 @@ void returningPhase(void) {
   while(porta_entrada_OU_sem_container_coleta()){
     delay(100);
   }
+
+  resetServos();
 }
 
 // --------------------------------------------- LOOP MAIN --------------------------------------------- 
@@ -447,10 +519,8 @@ void loop() {
   // -------------------------------------------------
 
 
-
-
-
   // Verificar se a porta de cima e o container de retorno estao no lugar   <- 2 FIM DE CURSO
+  resetServos();
   while(porta_entrada_OU_sem_container_coleta()){
     delay(100);
   }
