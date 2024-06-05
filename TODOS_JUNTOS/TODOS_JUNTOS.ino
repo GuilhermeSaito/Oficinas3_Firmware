@@ -27,7 +27,7 @@ double endWeight;
 int procStatus;
 
 const char* ssid = "NEOSILOS-2_4G";
-const char* password = "ueWKFEXx-NEOSILOS";
+const char* password = "passwpord";
 const char* apiUrl = "https://joaopedrogalera.pythonanywhere.com:80/machineSync";
 int WiFiStatus = 0;
 
